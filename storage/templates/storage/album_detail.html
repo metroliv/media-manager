@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="wrapper">
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h4 class="m-0 text-primary">Albums</h4>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                        <li class="breadcrumb-item active">Albums</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="content">
+                <div class="container-fluid">
+                    <!-- Flash Messages -->
+                    <div id="messageContainer">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                    <strong>{{ message.tags|title }}!</strong> {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-lg-12">
+                            <div class="card card-primary card-outline">
+                                <div class="card-header">
+                                    <h3 class="card-title text-danger">Album Details</h3>
+                                </div>
+                                <div class="card-body text-center">
+                                    <h2 class="text-primary">{{ album.name }}</h2>
+                                    <p class="text-muted">{{ album.description }}</p>
+                                </div>
+
+                                <!-- Add New File Button -->
+                                <div class="text-center my-3">
+                                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addFileModal">
+                                        <i class="fas fa-upload"></i> Add New File
+                                    </button>
+                                </div>
+
+                                <!-- Modal for File Upload -->
+                                <div class="modal fade" id="addFileModal" tabindex="-1" aria-labelledby="addFileModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="addFileModalLabel">Upload New File</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <form id="uploadForm" method="POST" enctype="multipart/form-data">
+                                                    {% csrf_token %}
+                                                    <div class="mb-3">
+                                                        <label for="fileUpload" class="form-label">Select File</label>
+                                                        <input type="file" class="form-control" id="fileUpload" name="file" required>
+                                                    </div>
+                                                    <div class="text-center">
+                                                        <button type="submit" class="btn btn-primary">Upload</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Search and Filter Options -->
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <input type="text" id="searchBox" class="form-control" placeholder="Search files...">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <select id="fileFilter" class="form-control">
+                                            <option value="all">Show All</option>
+                                            <option value="image">Images</option>
+                                            <option value="video">Videos</option>
+                                            <option value="pdf">PDFs</option>
+                                            <option value="word">Word Documents</option>
+                                            <option value="excel">Excel Sheets</option>
+                                            <option value="powerpoint">PowerPoint</option>
+                                            <option value="other">Other Files</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Media Files Display -->
+                                <div class="row" id="fileContainer">
+                                    {% for file in media_files %}
+                                        <div class="col-md-4 col-sm-6 mb-4 file-item" data-type="{{ file.file_type }}">
+                                            <div class="card shadow-sm border-0">
+                                                <div class="card-body text-center">
+                                                    {% if file.file_type == 'image' %}
+                                                        <a href="{{ file.file.url }}" target="_blank">
+                                                            <img src="{{ file.file.url }}" alt="Image" class="img-fluid rounded">
+                                                        </a>
+                                                    {% elif file.file_type == 'video' %}
+                                                        <video class="img-fluid rounded" controls>
+                                                            <source src="{{ file.file.url }}" type="video/mp4">
+                                                        </video>
+                                                    {% else %}
+                                                        <a href="{{ file.file.url }}" target="_blank">
+                                                            <i class="fas fa-file fa-3x text-secondary"></i>
+                                                        </a>
+                                                    {% endif %}
+                                                    <p class="mt-2">{{ file.file.name }}</p>
+                                                    <a href="{{ file.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">View File</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% empty %}
+                                        <div class="col-12 text-center">
+                                            <p class="text-muted">No files uploaded yet.</p>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- JavaScript for Auto-hide Messages and Upload Handling -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        setTimeout(function() {
+            document.querySelectorAll(".alert").forEach(alert => alert.remove());
+        }, 5000);
+
+        document.getElementById("uploadForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            let formData = new FormData(this);
+            fetch("{% url 'upload_media' album.id %}", {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                let messageContainer = document.getElementById("messageContainer");
+                if (data.success) {
+                    messageContainer.innerHTML = `
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <strong>Success!</strong> ${data.success}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    `;
+                    setTimeout(() => location.reload(), 3000);
+                } else {
+                    messageContainer.innerHTML = `
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <strong>Error!</strong> ${data.error}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        });
+    });
+</script>
+
+{% block extra_js %}{% endblock %}
+{% endblock %}

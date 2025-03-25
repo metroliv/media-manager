@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="profile-container">
+    <h1>User Profile</h1>
+
+    <!-- Profile Image -->
+    <div class="profile-image">
+        {% if user.profile.profile_picture %}
+            <img src="{{ user.profile.profile_picture.url }}" alt="Profile Image">
+        {% else %}
+            <img src="/static/default-avatar.png" alt="Default Profile Image">
+        {% endif %}
+    </div>
+
+    <!-- Profile Details -->
+    <div class="profile-details">
+        <p><strong>Username:</strong> {{ user.username }}</p>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+        <p><strong>Date Joined:</strong> {{ user.date_joined|date:"F d, Y" }}</p>
+    </div>
+
+    <!-- Profile Actions -->
+    <div class="profile-actions">
+        <a href="{% url 'edit_profile' %}" class="btn">Edit Profile</a>
+        <a href="{% url 'change_password' %}" class="btn">Change Password</a>
+        <a href="{% url 'logout' %}" class="btn logout">Logout</a>
+    </div>
+</div>
+
+<!-- Profile Page Styling -->
+<style>
+    .profile-container {
+        max-width: 500px;
+        margin: auto;
+        text-align: center;
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .profile-image img {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #007bff;
+        margin-bottom: 15px;
+    }
+
+    .profile-details p {
+        font-size: 16px;
+        margin: 8px 0;
+    }
+
+    .btn {
+        display: inline-block;
+        margin: 10px;
+        padding: 10px 20px;
+        background: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        transition: 0.3s;
+    }
+
+    .btn:hover {
+        background: #0056b3;
+    }
+
+    .btn.logout {
+        background: #dc3545;
+    }
+
+    .btn.logout:hover {
+        background: #b02a37;
+    }
+</style>
+
+{% endblock %}
